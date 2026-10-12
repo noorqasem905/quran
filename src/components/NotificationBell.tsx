@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import { Bell } from 'lucide-react';
 
 interface Notification {
@@ -16,7 +16,8 @@ export default function NotificationBell({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // 1. جلب الإشعارات السابقة
+    if (!userId) return;
+
     const fetchNotifications = async () => {
       const { data } = await supabase
         .from('notifications')
@@ -25,19 +26,23 @@ export default function NotificationBell({ userId }: { userId: string }) {
         .order('created_at', { ascending: false })
         .limit(5);
 
-      if (data) setNotifications(data);
+      if (data) setNotifications(data as Notification[]);
     };
 
     fetchNotifications();
 
-    // 2. الاستماع الفوري لأي إشعار جديد (Realtime)
     const channel = supabase
       .channel('realtime_notifications')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
-        (payload) => {
-          setNotifications((prev) => [payload.new as Notification, ...prev]);
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'notifications', 
+          filter: `user_id=eq.${userId}` 
+        },
+        (payload: { new: Notification }) => {
+          setNotifications((prev) => [payload.new, ...prev]);
         }
       )
       .subscribe();
@@ -51,7 +56,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   return (
     <div className="relative">
-      <button onClick={() => setOpen(!open)} className="relative p-2 text-gray-600 hover:text-gray-900">
+      <button 
+        type="button" 
+        onClick={() => setOpen(!open)} 
+        className="relative p-2 text-gray-600 hover:text-gray-900"
+      >
         <Bell className="w-6 h-6" />
         {unreadCount > 0 && (
           <span className="absolute top-1 right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
