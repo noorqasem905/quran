@@ -35,11 +35,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
       .channel('realtime_notifications')
       .on(
         'postgres_changes',
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'notifications', 
-          filter: `user_id=eq.${userId}` 
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
         },
         (payload: { new: Notification }) => {
           setNotifications((prev) => [payload.new, ...prev]);
@@ -56,9 +56,9 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   return (
     <div className="relative">
-      <button 
-        type="button" 
-        onClick={() => setOpen(!open)} 
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
         className="relative p-2 text-gray-600 hover:text-gray-900"
       >
         <Bell className="w-6 h-6" />
